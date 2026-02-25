@@ -15,6 +15,7 @@ INITIAL_SCALE = 1.0
 WORLD_WIDTH = 4000
 WORLD_HEIGHT = 4000
 TILE_SIZE = 64
+ZOOM_STEP = 0.2
 
 MIN_SCALE = 0.2
 MAX_SCALE = 5.0
@@ -152,14 +153,60 @@ class MapGame(arcade.Window):
             anchor_y="top"
         )
 
-    def on_key_press(self, key, modifiers):
+    def clamp_camera_position(self):
+        cx, cy = self.camera.position
+        zoom = self.camera.zoom
 
-        if key == arcade.key.PAGE_UP or key == arcade.key.EQUAL:
-            new_zoom = self.camera.zoom + ZOOM_SPEED * self.camera.zoom
+        half_view_w = (SCREEN_WIDTH / 2) / zoom
+        half_view_h = (SCREEN_HEIGHT / 2) / zoom
+
+        min_x = half_view_w
+        min_y = half_view_h
+        max_x = WORLD_WIDTH - half_view_w
+        max_y = WORLD_HEIGHT - half_view_h
+
+        if min_x > max_x:
+            cx = WORLD_WIDTH / 2
+        else:
+            cx = max(min_x, min(cx, max_x))
+
+        if min_y > max_y:
+            cy = WORLD_HEIGHT / 2
+        else:
+            cy = max(min_y, min(cy, max_y))
+
+        self.camera.position = (cx, cy)
+
+    def on_key_press(self, key, modifiers):
+        speed = 50 / self.camera.zoom
+        moved = False
+
+        if key == arcade.key.W or key == arcade.key.UP:
+            self.camera.position = (self.camera.position[0], self.camera.position[1] + speed)
+            moved = True
+        elif key == arcade.key.S or key == arcade.key.DOWN:
+            self.camera.position = (self.camera.position[0], self.camera.position[1] - speed)
+            moved = True
+        elif key == arcade.key.A or key == arcade.key.LEFT:
+            self.camera.position = (self.camera.position[0] - speed, self.camera.position[1])
+            moved = True
+        elif key == arcade.key.D or key == arcade.key.RIGHT:
+            self.camera.position = (self.camera.position[0] + speed, self.camera.position[1])
+            moved = True
+
+        elif key == arcade.key.PAGEUP:
+            new_zoom = self.camera.zoom + ZOOM_STEP
             self.camera.zoom = min(new_zoom, MAX_SCALE)
-        elif key == arcade.key.PAGE_DOWN or key == arcade.key.MINUS:
-            new_zoom = self.camera.zoom - ZOOM_SPEED * self.camera.zoom
+            self.clamp_camera_position()
+
+        elif key == arcade.key.PAGEDOWN:
+            new_zoom = self.camera.zoom - ZOOM_STEP
             self.camera.zoom = max(new_zoom, MIN_SCALE)
+            self.clamp_camera_position()
+
+        if moved:
+            self.clamp_camera_position()
+
 
 
 def setup_game(width=SCREEN_WIDTH, height=SCREEN_HEIGHT, title=SCREEN_TITLE,

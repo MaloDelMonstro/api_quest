@@ -152,7 +152,14 @@ class MapGame(arcade.Window):
             anchor_y="top"
         )
 
+    def on_key_press(self, key, modifiers):
 
+        if key == arcade.key.PAGE_UP or key == arcade.key.EQUAL:
+            new_zoom = self.camera.zoom + ZOOM_SPEED * self.camera.zoom
+            self.camera.zoom = min(new_zoom, MAX_SCALE)
+        elif key == arcade.key.PAGE_DOWN or key == arcade.key.MINUS:
+            new_zoom = self.camera.zoom - ZOOM_SPEED * self.camera.zoom
+            self.camera.zoom = max(new_zoom, MIN_SCALE)
 
 
 def setup_game(width=SCREEN_WIDTH, height=SCREEN_HEIGHT, title=SCREEN_TITLE,
